@@ -1,7 +1,9 @@
+# TODO: NOT DONE AT ALL , WHOLE FILE NEEDS LOOKING INTO
 import numpy as np
 import pandas as pd
-import oscar_data_preprocessing.make_every_json_to_csv as utils
+import oscar_data_preprocessing.create_additional_data as utils
 import Constants
+import os
 df = pd.read_excel('../data/movies.xlsx')
 oscars = pd.read_csv('../data/oscars.csv')
 
@@ -14,6 +16,4 @@ for i, film in enumerate(df['Film']):
             q += 1
 
 
-# utils.imdb_json_to_csv()
-# utils.get_imdb_rating(df)
-utils.quick_fix(df)
+utils.create_enhanced_movie_data_csv(df)
