@@ -14,5 +14,6 @@ for i, film in enumerate(df['Film']):
             q += 1
 
 
-utils.imdb_json_to_csv()
+# utils.imdb_json_to_csv()
 # utils.get_imdb_rating(df)
+utils.quick_fix(df)
