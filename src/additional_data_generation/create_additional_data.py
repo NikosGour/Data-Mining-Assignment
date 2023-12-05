@@ -11,7 +11,7 @@ colorama_init()
 
 def create_oscars_csv():
     # data taken from https://github.com/AminFadaee/Academy-Awards-Data
-    data_folder = os.path.join(Constants.ROOT_PROJECT_DIR, 'src', 'oscar_data_preprocessing', 'winners_only')
+    data_folder = os.path.join(Constants.ROOT_PROJECT_DIR, 'src', 'additional_data_generation', 'winners_only')
     json_files = os.listdir(data_folder)
     json_files.sort()
 
