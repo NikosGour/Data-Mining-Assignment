@@ -3,7 +3,8 @@ import os
 
 import Constants
 
-oscars = pd.read_csv(os.path.join(Constants.ROOT_PROJECT_DIR, 'data/oscars.csv'))
+oscars = pd.read_csv(os.path.join(Constants.ROOT_PROJECT_DIR, 'data','oscars.csv'))
+imdb = pd.read_csv(os.path.join(Constants.ROOT_PROJECT_DIR, 'data', 'imdb_ratings.csv'))
 
 
 def fill_oscars(df):
@@ -49,7 +50,22 @@ def calculate_rt_mc_difference(df: pd.DataFrame):
 def calculate_critics_audience_difference(df: pd.DataFrame):
     df['CRITICS_AUDIENCE_DIFFERENCE'] = df['AVERAGE_CRITICS'] - df['AVERAGE_AUDIENCE']
     return df
-def fill_main(df):
+
+def calculate_release_month_day(df: pd.DataFrame):
+    temp_date = pd.to_datetime(df['RELEASE DATE (US)'], format='mixed')
+    df['RELEASE_MONTH'] = temp_date.dt.month
+    df['RELEASE_DAY'] = temp_date.dt.day
+    df = df.drop(columns="RELEASE DATE (US)")
+    return df
+def calculate_imdb_ratings_and_rt_difference(df: pd.DataFrame):
+    for i, film in enumerate(df['TITLE']):
+        film = str(film)
+        if film in imdb['Title'].values:
+            # We do `rating * 10` to bring the imdb rating to the same scale as the rt rating (0-10 -> 0-100)
+            df.loc[i, 'IMDB_RATING'] = imdb[imdb['Title'] == film]['imdbRating'].iloc[0] * 10
+            df.loc[i, 'IMDB_RT_DIFFERENCE'] = df.loc[i,'IMDB_RATING'] - df.loc[i,'RT_CRITICS']
+    return df
+def fill_column_values(df):
     df = fill_oscars(df)
     df = calculate_percentage_of_gross_earned_abroad(df)
     df = calculate_budget(df)
@@ -59,4 +75,6 @@ def fill_main(df):
     df = calculate_average_audience(df)
     df = calculate_rt_mc_difference(df)
     df = calculate_critics_audience_difference(df)
+    df = calculate_release_month_day(df)
+    df = calculate_imdb_ratings_and_rt_difference(df)
     return df
