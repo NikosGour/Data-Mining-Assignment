@@ -1,5 +1,6 @@
 import json
 
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import sklearn.tree
@@ -20,12 +21,20 @@ from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 
 from sklearn.metrics import classification_report, confusion_matrix
-
-
+from sklearn.preprocessing import MinMaxScaler
 
 df = pd.read_excel('data/movies.xlsx')
 df = preprocessing.setup(df)
 # print(df['WON_OSCAR'])
+
+min_max_scaler = MinMaxScaler()
+
+df['IMDB_RATING'] = min_max_scaler.fit_transform(df[['IMDB_RATING']])
+df['OPENING_WEEKEND'] = min_max_scaler.fit_transform(df[['OPENING_WEEKEND']])
+df['BUDGET'] = min_max_scaler.fit_transform(df[['BUDGET']])
+df['WORLDWIDE_GROSS'] = min_max_scaler.fit_transform(df[['WORLDWIDE_GROSS']])
+df['FOREIGN_GROSS'] = min_max_scaler.fit_transform(df[['FOREIGN_GROSS']])
+df['DOMESTIC_GROSS'] = min_max_scaler.fit_transform(df[['DOMESTIC_GROSS']])
 
 
 df = df.drop(columns=['TITLE'])
@@ -33,11 +42,16 @@ X = df.drop(columns=['WON_OSCAR'])
 y = df['WON_OSCAR']
 
 
+# matplotlib.use('TkAgg')
+# plt.scatter(df['WON_OSCAR'],df['RT_CRITICS'])
+# plt.xlabel('WON_OSCAR')
+# plt.ylabel('WORLDWIDE_GROSS')
+# plt.show()
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
 
-dtree = DecisionTreeClassifier(criterion='entropy',min_samples_leaf=3)
+dtree = DecisionTreeClassifier(criterion='entropy',min_samples_split=3,min_samples_leaf=3)
 # rtree = DecisionTreeRegressor()
 # rforest = RandomForestRegressor(n_estimators=10,max_depth=None,min_samples_split=2)
 # gauss = GaussianNB()
@@ -54,9 +68,12 @@ dtree.fit(X_train, y_train)
 
 y_pred = dtree.predict(X_test)
 
+df = pd.DataFrame(dtree.feature_importances_, index=X.columns, columns=['importance']).sort_values('importance',ascending=False)
+
 print(f"{Fore.GREEN}Decision Tree Classifier{Style.RESET_ALL}")
 print(classification_report(y_test, y_pred))
 print('-'*100)
+
 
 # y_pred = rtree.predict(X_test)
 # print(f"{Fore.GREEN}Decision Tree Regressor{Style.RESET_ALL}")
@@ -72,17 +89,17 @@ print('-'*100)
 # print(f"{Fore.GREEN}Gaussian Naive Bayes{Style.RESET_ALL}")
 # print(classification_report(y_test, y_pred))
 # print('-'*100)
+# #
+# # y_pred = model.predict(X_test)
+# # print(f"{Fore.GREEN}Support Vector Machine{Style.RESET_ALL}")
+# # print(classification_report(y_test, y_pred))
+# # print('-'*100)
 #
-# y_pred = model.predict(X_test)
-# print(f"{Fore.GREEN}Support Vector Machine{Style.RESET_ALL}")
-# print(classification_report(y_test, y_pred))
-# print('-'*100)
-
 fig = plt.figure(figsize=(25, 20))
 _ = sklearn.tree.plot_tree(dtree, feature_names=X.columns, class_names=['False', 'True'], filled=True)
 plt.savefig('tree.svg', format='svg', bbox_inches='tight')
-# plt.show()
-
+# # plt.show()
+#
 
 # movie_name = 'WALL-E'
 # url = f"https://www.omdbapi.com/?t={movie_name}&apikey=10461461"

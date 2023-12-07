@@ -65,6 +65,13 @@ def calculate_imdb_ratings_and_rt_difference(df: pd.DataFrame):
             df.loc[i, 'IMDB_RATING'] = imdb[imdb['Title'] == film]['imdbRating'].iloc[0] * 10
             df.loc[i, 'IMDB_RT_DIFFERENCE'] = df.loc[i,'IMDB_RATING'] - df.loc[i,'RT_CRITICS']
     return df
+
+def post_calculation_imdb_ratings_and_rt_difference(df: pd.DataFrame):
+    df['IMDB_RATING'] = df['IMDB_RATING'].fillna(df['IMDB_RATING'].mean())
+    for i,film in enumerate(df['TITLE']):
+        if pd.isna(df.loc[i,'IMDB_RT_DIFFERENCE']):
+            df.loc[i, 'IMDB_RT_DIFFERENCE'] = df.loc[i,'IMDB_RATING'] - df.loc[i,'RT_CRITICS']
+    return df
 def fill_column_values(df):
     df = fill_oscars(df)
     df = calculate_percentage_of_gross_earned_abroad(df)
@@ -77,4 +84,5 @@ def fill_column_values(df):
     df = calculate_critics_audience_difference(df)
     df = calculate_release_month_day(df)
     df = calculate_imdb_ratings_and_rt_difference(df)
+    df = post_calculation_imdb_ratings_and_rt_difference(df)
     return df
