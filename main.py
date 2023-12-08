@@ -29,14 +29,20 @@ df = preprocessing.setup(df)
 
 min_max_scaler = MinMaxScaler()
 
-df['IMDB_RATING'] = min_max_scaler.fit_transform(df[['IMDB_RATING']])
-df['OPENING_WEEKEND'] = min_max_scaler.fit_transform(df[['OPENING_WEEKEND']])
-df['BUDGET'] = min_max_scaler.fit_transform(df[['BUDGET']])
-df['WORLDWIDE_GROSS'] = min_max_scaler.fit_transform(df[['WORLDWIDE_GROSS']])
-df['FOREIGN_GROSS'] = min_max_scaler.fit_transform(df[['FOREIGN_GROSS']])
-df['DOMESTIC_GROSS'] = min_max_scaler.fit_transform(df[['DOMESTIC_GROSS']])
+# df['IMDB_RATING'] = min_max_scaler.fit_transform(df[['IMDB_RATING']])
+# df['OPENING_WEEKEND'] = min_max_scaler.fit_transform(df[['OPENING_WEEKEND']])
+# df['BUDGET'] = min_max_scaler.fit_transform(df[['BUDGET']])
+# df['WORLDWIDE_GROSS'] = min_max_scaler.fit_transform(df[['WORLDWIDE_GROSS']])
+# df['FOREIGN_GROSS'] = min_max_scaler.fit_transform(df[['FOREIGN_GROSS']])
+# df['DOMESTIC_GROSS'] = min_max_scaler.fit_transform(df[['DOMESTIC_GROSS']])
 
 
+
+
+non_oscar = df[df['WON_OSCAR'] == False].sample(n=91,axis=0)
+oscar = df[df['WON_OSCAR'] == True]
+
+df = pd.concat([non_oscar,oscar])
 df = df.drop(columns=['TITLE'])
 X = df.drop(columns=['WON_OSCAR'])
 y = df['WON_OSCAR']
@@ -48,10 +54,10 @@ y = df['WON_OSCAR']
 # plt.ylabel('WORLDWIDE_GROSS')
 # plt.show()
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=41, stratify=df['WON_OSCAR'])
 
 
-dtree = DecisionTreeClassifier(criterion='entropy',min_samples_split=3,min_samples_leaf=3)
+dtree = DecisionTreeClassifier()
 # rtree = DecisionTreeRegressor()
 # rforest = RandomForestRegressor(n_estimators=10,max_depth=None,min_samples_split=2)
 # gauss = GaussianNB()
