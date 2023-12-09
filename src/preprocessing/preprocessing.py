@@ -48,7 +48,7 @@ def fix_column_names(df: pd.DataFrame):
     return df
 
 def additional_preprocessing(df: pd.DataFrame):
-    df = pd.get_dummies(df, columns=["GENRE", 'SCRIPT_TYPE', 'OSCAR_DETAILS'])
+    df = pd.get_dummies(df, columns=["GENRE", 'SCRIPT_TYPE'])
     # df = df.drop(columns=['TITLE'])
     return df
 def setup(copy_df) -> pd.DataFrame:
@@ -57,7 +57,7 @@ def setup(copy_df) -> pd.DataFrame:
     df = fix_column_names(df)
     df = clean_column_values(df)
     df = fill_column_values(df)
-    df = additional_preprocessing(df)
+    # df = additional_preprocessing(df)
     return df
 
 

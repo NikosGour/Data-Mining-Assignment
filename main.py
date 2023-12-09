@@ -12,12 +12,13 @@ import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import SVC
+import torch
 
 import Constants
 import os
 import src.preprocessing.preprocessing as preprocessing
 from IPython.display import display, HTML
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, cross_val_score, ShuffleSplit
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 
 from sklearn.metrics import classification_report, confusion_matrix
@@ -38,12 +39,7 @@ min_max_scaler = MinMaxScaler()
 
 
 
-
-non_oscar = df[df['WON_OSCAR'] == False].sample(n=91,axis=0)
-oscar = df[df['WON_OSCAR'] == True]
-
-df = pd.concat([non_oscar,oscar])
-df = df.drop(columns=['TITLE'])
+df = df.drop(columns=['TITLE','OSCAR_DETAILS'])
 X = df.drop(columns=['WON_OSCAR'])
 y = df['WON_OSCAR']
 
@@ -54,18 +50,31 @@ y = df['WON_OSCAR']
 # plt.ylabel('WORLDWIDE_GROSS')
 # plt.show()
 
+dtree = DecisionTreeClassifier()
+cv = ShuffleSplit(n_splits=5, test_size=0.2)
+scores = cross_val_score(dtree, X, y, cv=cv)
+print(f"{Fore.GREEN}Decision Tree Classifier{Style.RESET_ALL}")
+print(f"Accuracy: {scores.mean():.2f} (+/- {scores.std() * 2:.2f})")
+print('-'*100)
+print(f"{Fore.GREEN}Scores: {scores}{Style.RESET_ALL}")
+print('-'*100)
+print(f"{Fore.GREEN}Mean: {scores.mean()}{Style.RESET_ALL}")
+print('-'*100)
+print(f"{Fore.GREEN}Std: {scores.std()}{Style.RESET_ALL}")
+print('-'*100)
+
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=41, stratify=df['WON_OSCAR'])
 
 
-dtree = DecisionTreeClassifier()
 # rtree = DecisionTreeRegressor()
 # rforest = RandomForestRegressor(n_estimators=10,max_depth=None,min_samples_split=2)
 # gauss = GaussianNB()
 # model = SVC()
 
 
-
+#
 dtree.fit(X_train, y_train)
+#
 # rtree.fit(X_train, y_train)
 # rforest.fit(X_train, y_train)
 # gauss.fit(X_train, y_train)
