@@ -10,22 +10,26 @@ from colorama import Style
 import requests
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.feature_selection import RFECV
 from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import SVC
 import torch
 
 import Constants
 import os
-import src.preprocessing.preprocessing as preprocessing
+from src.preprocessing.preprocessing import Preprocessing
 from IPython.display import display, HTML
-from sklearn.model_selection import train_test_split, cross_val_score, ShuffleSplit
+from sklearn.model_selection import train_test_split, cross_val_score, ShuffleSplit, StratifiedKFold
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 
 from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.preprocessing import MinMaxScaler
 
+from src.predict_class import PredictionMovie
+
+preprocessing = Preprocessing()
 df = pd.read_excel('data/movies.xlsx')
-df = preprocessing.setup(df)
+df = preprocessing.fit(df)
 # print(df['WON_OSCAR'])
 
 min_max_scaler = MinMaxScaler()
@@ -38,11 +42,52 @@ min_max_scaler = MinMaxScaler()
 # df['DOMESTIC_GROSS'] = min_max_scaler.fit_transform(df[['DOMESTIC_GROSS']])
 
 
-
-df = df.drop(columns=['TITLE','OSCAR_DETAILS'])
+df = df.drop(columns=['TITLE'])
 X = df.drop(columns=['WON_OSCAR'])
 y = df['WON_OSCAR']
 
+clf = DecisionTreeClassifier()
+cv = StratifiedKFold(n_splits=5)
+rfecv = RFECV(estimator=clf, cv=cv, scoring='accuracy')
+rfecv.fit(X, y)
+
+print(f"{Fore.GREEN}Decision Tree Classifier{Style.RESET_ALL}")
+print(f"Optimal number of features : {rfecv.n_features_}")
+print('-' * 100)
+print(f"{Fore.GREEN}Feature Ranking: {rfecv.ranking_}{Style.RESET_ALL}")
+print('-' * 100)
+print(f"{Fore.GREEN}Feature Support: {rfecv.support_}{Style.RESET_ALL}")
+print('-' * 100)
+print(f"{Fore.GREEN}Feature Importances: {rfecv.estimator_.feature_importances_}{Style.RESET_ALL}")
+print('-' * 100)
+print(f"{Fore.GREEN}Feature Names: {X.columns}{Style.RESET_ALL}")
+print('-' * 100)
+
+print(X.columns[rfecv.support_])
+print('-' * 100)
+columns = df.columns
+data = PredictionMovie("PUSS IN BOOTS: THE LAST WISH", 2022, "Original Screenplay", 95, 73, 94, 88
+                       , "Drama, Animation, Action", 12_400_000, 185_500_000, 299_200_000, 484_700_000,
+                       110, 6.6, 12,22)
+# new_df = pd.DataFrame(data=[data], columns=columns)
+data = [data,data,data,data,data,data,data,data,data,data,data,data]
+new_df = preprocessing.transform(data)
+new_df = new_df.drop(columns=['TITLE','WON_OSCAR'])
+
+
+x = rfecv.predict(new_df)
+
+n_scores = len(rfecv.cv_results_["mean_test_score"])
+plt.figure()
+plt.xlabel("Number of features selected")
+plt.ylabel("Mean test accuracy")
+plt.errorbar(
+    range(1, n_scores + 1),
+    rfecv.cv_results_["mean_test_score"],
+    yerr=rfecv.cv_results_["std_test_score"],
+)
+plt.title("Recursive Feature Elimination \nwith correlated features")
+plt.show()
 
 # matplotlib.use('TkAgg')
 # plt.scatter(df['WON_OSCAR'],df['RT_CRITICS'])
@@ -50,20 +95,20 @@ y = df['WON_OSCAR']
 # plt.ylabel('WORLDWIDE_GROSS')
 # plt.show()
 
-dtree = DecisionTreeClassifier()
-cv = ShuffleSplit(n_splits=5, test_size=0.2)
-scores = cross_val_score(dtree, X, y, cv=cv)
-print(f"{Fore.GREEN}Decision Tree Classifier{Style.RESET_ALL}")
-print(f"Accuracy: {scores.mean():.2f} (+/- {scores.std() * 2:.2f})")
-print('-'*100)
-print(f"{Fore.GREEN}Scores: {scores}{Style.RESET_ALL}")
-print('-'*100)
-print(f"{Fore.GREEN}Mean: {scores.mean()}{Style.RESET_ALL}")
-print('-'*100)
-print(f"{Fore.GREEN}Std: {scores.std()}{Style.RESET_ALL}")
-print('-'*100)
+# dtree = DecisionTreeClassifier()
+# cv = ShuffleSplit(n_splits=5, test_size=0.2)
+# scores = cross_val_score(dtree, X, y, cv=cv)
+# print(f"{Fore.GREEN}Decision Tree Classifier{Style.RESET_ALL}")
+# print(f"Accuracy: {scores.mean():.2f} (+/- {scores.std() * 2:.2f})")
+# print('-'*100)
+# print(f"{Fore.GREEN}Scores: {scores}{Style.RESET_ALL}")
+# print('-'*100)
+# print(f"{Fore.GREEN}Mean: {scores.mean()}{Style.RESET_ALL}")
+# print('-'*100)
+# print(f"{Fore.GREEN}Std: {scores.std()}{Style.RESET_ALL}")
+# print('-'*100)
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=41, stratify=df['WON_OSCAR'])
+# X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=41, stratify=df['WON_OSCAR'])
 
 
 # rtree = DecisionTreeRegressor()
@@ -73,7 +118,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_
 
 
 #
-dtree.fit(X_train, y_train)
+# dtree.fit(X_train, y_train)
 #
 # rtree.fit(X_train, y_train)
 # rforest.fit(X_train, y_train)
@@ -81,13 +126,13 @@ dtree.fit(X_train, y_train)
 # model.fit(X_train, y_train)
 
 
-y_pred = dtree.predict(X_test)
-
-df = pd.DataFrame(dtree.feature_importances_, index=X.columns, columns=['importance']).sort_values('importance',ascending=False)
-
-print(f"{Fore.GREEN}Decision Tree Classifier{Style.RESET_ALL}")
-print(classification_report(y_test, y_pred))
-print('-'*100)
+# y_pred = dtree.predict(X_test)
+#
+# df = pd.DataFrame(dtree.feature_importances_, index=X.columns, columns=['importance']).sort_values('importance',ascending=False)
+#
+# print(f"{Fore.GREEN}Decision Tree Classifier{Style.RESET_ALL}")
+# print(classification_report(y_test, y_pred))
+# print('-'*100)
 
 
 # y_pred = rtree.predict(X_test)
@@ -110,9 +155,9 @@ print('-'*100)
 # # print(classification_report(y_test, y_pred))
 # # print('-'*100)
 #
-fig = plt.figure(figsize=(25, 20))
-_ = sklearn.tree.plot_tree(dtree, feature_names=X.columns, class_names=['False', 'True'], filled=True)
-plt.savefig('tree.svg', format='svg', bbox_inches='tight')
+# fig = plt.figure(figsize=(25, 20))
+# _ = sklearn.tree.plot_tree(dtree, feature_names=X.columns, class_names=['False', 'True'], filled=True)
+# plt.savefig('tree.svg', format='svg', bbox_inches='tight')
 # # plt.show()
 #
 
@@ -128,4 +173,3 @@ plt.savefig('tree.svg', format='svg', bbox_inches='tight')
 # df2 = pd.read_csv('data/not_found.csv')
 #
 # print(len(df1)+len(df2) == len(df))
-

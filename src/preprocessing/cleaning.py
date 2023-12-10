@@ -111,7 +111,10 @@ def clean_script_type(df: pd.DataFrame):
 def clean_genre(df: pd.DataFrame):
     # We drop this movie because it's the only one with a genre of 'nan',
     # if we had way more movies with a genre of 'nan' we wouldn't drop the rows.
-    df.drop(index=930, inplace=True)
+    try:
+        df.drop(index=930, inplace=True)
+    except Exception as e:
+        print(e)
     df.index = pd.RangeIndex(0, len(df.index))
 
     # We make everything uppercase and strip the whitespace for consistency.
@@ -120,6 +123,8 @@ def clean_genre(df: pd.DataFrame):
 
     # There is some rows where there is a dot instead of a comma, so we replace them.
     df['GENRE'] = df['GENRE'].apply(lambda x: x.replace('.', ','))
+
+    df['GENRE']  = df['GENRE'].apply(lambda x: x.rstrip(','))
 
     # There are some rows where there is a typo `FAMIILY` instead of `FAMILY`
     df['GENRE'] = df['GENRE'].apply(lambda x: x.replace('II', 'I'))
@@ -149,9 +154,9 @@ def clean_genre(df: pd.DataFrame):
     # We also strip the whitespace for consistency.
     # if the column already exists we just set it to True.
     for i in df.index:
-        for script in df.loc[i, 'GENRE'].split(','):
-            script = script.strip()
-            df.loc[i, f"GENRE_{script.replace(' ', '_')}"] = True
+        for genre in df.loc[i, 'GENRE'].split(','):
+            genre = genre.strip()
+            df.loc[i, f"GENRE_{genre.replace(' ', '_')}"] = True
 
     # We also drop the `GENRE` column because we don't need it anymore.
     df.drop(columns=['GENRE'], inplace=True)

@@ -33,7 +33,10 @@ def calculate_budget(df: pd.DataFrame):
     # The movie 'Life as We Know It' had a budget of `52.274.000.000$` according to the dataset.
     # This is obviously wrong, so we will fill the data with the correct budget of `38.000.000`
     # (https://www.google.com/search?q=Life+as+We+Know+It+budget&oq=life&gs_lcrp=EgZjaHJvbWUqCAgAEEUYJxg7MggIABBFGCcYOzIHCAEQLhiABDIHCAIQLhiABDIHCAMQLhiABDIHCAQQLhiABDIGCAUQRRg9MgYIBhBFGD0yBggHEEUYPdIBCDM2MzhqMGo5qAIAsAIA&sourceid=chrome&ie=UTF-8)
-    df.loc[df.index[df['TITLE'] == 'Life as We Know It'][0], 'BUDGET'] = 38
+    try:
+        df.loc[df.index[df['TITLE'] == 'Life as We Know It'][0], 'BUDGET'] = 38
+    except Exception as e:
+        print(e)
     df['BUDGET'] = df['BUDGET'].map(lambda x: x * 1_000_000)
     return df
 
