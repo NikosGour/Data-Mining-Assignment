@@ -1,4 +1,5 @@
 import pandas as pd
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 from src.predict_class import PredictionMovie
 from src.preprocessing.cleaning import clean_column_values
@@ -68,7 +69,7 @@ class Preprocessing():
 
 
     def transform(self, movies: list[PredictionMovie]) -> pd.DataFrame:
-
+        standard_scaler = StandardScaler()
         df = pd.DataFrame(columns=self.columns)
         df = df.astype(self.train_df.dtypes.to_dict())
 
@@ -114,6 +115,19 @@ class Preprocessing():
             for col in df.columns:
                 if col.startswith('SCRIPT_'):
                     df[col].fillna(False, inplace=True)
+
+            standard_scaler = standard_scaler.fit(df[['IMDB_RATING']])
+            df['IMDB_RATING'] = standard_scaler.transform(df[['IMDB_RATING']])
+            standard_scaler = standard_scaler.fit(df[['OPENING_WEEKEND']])
+            df['OPENING_WEEKEND'] = standard_scaler.transform(df[['OPENING_WEEKEND']])
+            standard_scaler = standard_scaler.fit(df[['BUDGET']])
+            df['BUDGET'] = standard_scaler.transform(df[['BUDGET']])
+            standard_scaler = standard_scaler.fit(df[['WORLDWIDE_GROSS']])
+            df['WORLDWIDE_GROSS'] = standard_scaler.transform(df[['WORLDWIDE_GROSS']])
+            standard_scaler = standard_scaler.fit(df[['FOREIGN_GROSS']])
+            df['FOREIGN_GROSS'] = standard_scaler.transform(df[['FOREIGN_GROSS']])
+            standard_scaler = standard_scaler.fit(df[['DOMESTIC_GROSS']])
+            df['DOMESTIC_GROSS'] = standard_scaler.transform(df[['DOMESTIC_GROSS']])
 
         return df
 
