@@ -35,14 +35,6 @@ preprocessing = Preprocessing()
 df = pd.read_excel('data/movies.xlsx')
 df = preprocessing.fit(df)
 # print(df['WON_OSCAR'])
-min_max_scaler = StandardScaler()
-
-df['IMDB_RATING'] = min_max_scaler.fit_transform(df[['IMDB_RATING']])
-df['OPENING_WEEKEND'] = min_max_scaler.fit_transform(df[['OPENING_WEEKEND']])
-df['BUDGET'] = min_max_scaler.fit_transform(df[['BUDGET']])
-df['WORLDWIDE_GROSS'] = min_max_scaler.fit_transform(df[['WORLDWIDE_GROSS']])
-df['FOREIGN_GROSS'] = min_max_scaler.fit_transform(df[['FOREIGN_GROSS']])
-df['DOMESTIC_GROSS'] = min_max_scaler.fit_transform(df[['DOMESTIC_GROSS']])
 
 
 df = df.drop(columns=['TITLE'])
@@ -50,7 +42,7 @@ X = df.drop(columns=['WON_OSCAR'])
 y = df['WON_OSCAR']
 
 def decisionTree():
-    clf = LogisticRegression(max_iter=1000)
+    clf = LogisticRegression(max_iter=1000 , class_weight={True: 0.93, False: 0.07})
     cv = StratifiedKFold(n_splits=5, shuffle=True)
     scores =[]
     for i,(train_index, test_index) in enumerate(cv.split(X, y)):
