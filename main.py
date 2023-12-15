@@ -71,8 +71,8 @@ def decisionTree():
 
 
 def randomForest():
-    true_class_weight = 0.6
-    clf = RandomForestClassifier(n_estimators=1000, class_weight={True: true_class_weight, False: 1 - true_class_weight})
+    false_class_weight = 0.999
+    clf = RandomForestClassifier(n_estimators=1000, class_weight={True: 1 - false_class_weight, False: false_class_weight})
     cv = StratifiedKFold(n_splits=5, shuffle=True)
     scores = []
     for i, (train_index, test_index) in enumerate(cv.split(X, y)):
