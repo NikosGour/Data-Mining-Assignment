@@ -29,6 +29,7 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 from src.predict_class import PredictionMovie
 import warnings
+
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 preprocessing = Preprocessing()
@@ -41,50 +42,65 @@ df = df.drop(columns=['TITLE'])
 X = df.drop(columns=['WON_OSCAR'])
 y = df['WON_OSCAR']
 
+
 def decisionTree():
-    clf = LogisticRegression(max_iter=1000 , class_weight={True: 0.93, False: 0.07})
+    true_class_weight = 0.6
+    clf = DecisionTreeClassifier( class_weight={True: true_class_weight, False: 1 - true_class_weight})
     cv = StratifiedKFold(n_splits=5, shuffle=True)
-    scores =[]
-    for i,(train_index, test_index) in enumerate(cv.split(X, y)):
+    scores = []
+    for i, (train_index, test_index) in enumerate(cv.split(X, y)):
         clf.fit(X.iloc[train_index], y.iloc[train_index])
         print(classification_report(y.iloc[test_index], clf.predict(X.iloc[test_index])))
         scores.append(clf.score(X.iloc[test_index], y.iloc[test_index]))
-        # fig = plt.figure(figsize=(25, 20))
-        # _ = sklearn.tree.plot_tree(clf, feature_names=X.columns, class_names=['False', 'True'], filled=True)
-        # plt.savefig(f'tree{i}.svg', format='svg', bbox_inches='tight')
+        fig = plt.figure(figsize=(25, 20))
+        _ = sklearn.tree.plot_tree(clf, feature_names=X.columns, class_names=['False', 'True'], filled=True)
+        plt.savefig(f'tree{i}.svg', format='svg', bbox_inches='tight')
 
     print(f"{Fore.GREEN}Decision Tree Classifier{Style.RESET_ALL}")
     print(f"Accuracy: {np.mean(scores):.2f} (+/- {np.std(scores) * 2:.2f})")
     print('-' * 100)
 
-    movie = PredictionMovie("Hachi: A Dog's Tale", 2009, "Original Screenplay", 64, 54, 85, 63,"Drama, Family", 108_382, 0, 47_707_417, 47_707_417	, 16, 8.1, 6, 13)
+    movie = PredictionMovie("Hachi: A Dog's Tale", 2009, "Original Screenplay", 64, 54, 85, 63, "Drama, Family",
+                            108_382, 0, 47_707_417, 47_707_417, 16, 8.1, 6, 13)
     movie = preprocessing.transform([movie])
-    movie = movie.drop(columns=['TITLE','WON_OSCAR'])
+    movie = movie.drop(columns=['TITLE', 'WON_OSCAR'])
     print(clf.predict_proba(movie))
-    print(clf.coef_,clf.intercept_)
-decisionTree()
+
+
+# decisionTree()
+
+
 def randomForest():
-    clf = RandomForestClassifier(n_estimators=1000)
+    true_class_weight = 0.6
+    clf = RandomForestClassifier(n_estimators=1000, class_weight={True: true_class_weight, False: 1 - true_class_weight})
     cv = StratifiedKFold(n_splits=5, shuffle=True)
-    scores =[]
-    for i,(train_index, test_index) in enumerate(cv.split(X, y)):
+    scores = []
+    for i, (train_index, test_index) in enumerate(cv.split(X, y)):
         clf.fit(X.iloc[train_index], y.iloc[train_index])
         print(classification_report(y.iloc[test_index], clf.predict(X.iloc[test_index])))
         scores.append(clf.score(X.iloc[test_index], y.iloc[test_index]))
         fig = plt.figure(figsize=(25, 20))
-        _ = sklearn.tree.plot_tree(clf.estimators_[0], feature_names=X.columns, class_names=['False', 'True'], filled=True)
+        _ = sklearn.tree.plot_tree(clf.estimators_[0], feature_names=X.columns, class_names=['False', 'True'],
+                                   filled=True)
         plt.savefig(f'tree{i}.svg', format='svg', bbox_inches='tight')
 
     print(f"{Fore.GREEN}Random Forest Classifier{Style.RESET_ALL}")
     print(f"Accuracy: {np.mean(scores):.2f} (+/- {np.std(scores) * 2:.2f})")
     print('-' * 100)
+    movie = PredictionMovie("Hachi: A Dog's Tale", 2009, "Original Screenplay", 64, 54, 85, 63, "Drama, Family",
+                            108_382, 0, 47_707_417, 47_707_417, 16, 8.1, 6, 13)
+    movie = preprocessing.transform([movie])
+    movie = movie.drop(columns=['TITLE', 'WON_OSCAR'])
+    print(clf.predict_proba(movie))
 
-#XALIA GIA TO PROBLIMA
+
+randomForest()
+# XALIA GIA TO PROBLIMA
 def KNN():
     clf = KNeighborsClassifier(n_neighbors=2)
     cv = StratifiedKFold(n_splits=5, shuffle=True)
-    scores =[]
-    for i,(train_index, test_index) in enumerate(cv.split(X, y)):
+    scores = []
+    for i, (train_index, test_index) in enumerate(cv.split(X, y)):
         clf.fit(X.iloc[train_index], y.iloc[train_index])
         print(classification_report(y.iloc[test_index], clf.predict(X.iloc[test_index])))
         scores.append(clf.score(X.iloc[test_index], y.iloc[test_index]))
@@ -92,6 +108,7 @@ def KNN():
     print(f"{Fore.GREEN}KNeighbors Classifier{Style.RESET_ALL}")
     print(f"Accuracy: {np.mean(scores):.2f} (+/- {np.std(scores) * 2:.2f})")
     print('-' * 100)
+
 
 # rfecv = RFECV(estimator=clf, cv=cv, scoring='accuracy')
 # rfecv.fit(X, y)
@@ -113,12 +130,11 @@ def KNN():
 # columns = df.columns
 data = PredictionMovie("PUSS IN BOOTS: THE LAST WISH", 2022, "Original Screenplay", 95, 73, 94, 88
                        , "Drama, Animation, Action", 12_400_000, 185_500_000, 299_200_000, 484_700_000,
-                       110, 6.6, 12,22)
+                       110, 6.6, 12, 22)
 # new_df = pd.DataFrame(data=[data], columns=columns)
-data = [data,data,data,data,data,data,data,data,data,data,data,data]
+data = [data, data, data, data, data, data, data, data, data, data, data, data]
 new_df = preprocessing.transform(data)
-new_df = new_df.drop(columns=['TITLE','WON_OSCAR'])
-
+new_df = new_df.drop(columns=['TITLE', 'WON_OSCAR'])
 
 # x = rfecv.predict(new_df)
 
