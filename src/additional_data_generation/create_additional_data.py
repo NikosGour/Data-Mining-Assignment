@@ -9,6 +9,7 @@ from colorama import Style
 
 colorama_init()
 
+
 def create_oscars_csv():
     # data taken from https://github.com/AminFadaee/Academy-Awards-Data
     data_folder = os.path.join(Constants.ROOT_PROJECT_DIR, 'src', 'additional_data_generation', 'winners_only')
@@ -17,23 +18,25 @@ def create_oscars_csv():
 
     df = pd.DataFrame(columns=['year', 'winners', 'category'])
 
+    # For every json file in the folder winners_only,
     for file_name in json_files:
 
         path = os.path.join(data_folder, file_name)
-        file_name_without_extension = file_name.split('.')[0]
+        file_name_without_extension = file_name.split('.')[0]  # year of the oscar
 
         with open(path) as f:
             data = json.load(f)
 
+            # For every oscar category in the json file
             for obj in data:
 
-                #After analysis of the data, there is only two cases,for each oscar category there can be:
-                #1. Two winners
-                #2. One winner
-                #That's why I'm using this if statement instead of a more generalized approach
+                # After analysis of the data, there is only two cases,for each oscar category there can be:
+                # 1. Two winners
+                # 2. One winner
+                # That's why I'm using this if statement instead of a more generalized approach
                 if len(obj['winners']) == 2:
 
-                    #Appending a new row to the `Oscars dataframe` with columns:
+                    # Appending a new row to the `Oscars dataframe` with columns:
                     # year: the year of the oscar
                     # winners: the name of the Movie that won
                     # category: the Title of the oscar it won
@@ -77,7 +80,6 @@ def create_enhanced_movie_data_csv(df: pd.DataFrame):
         film = str(film)
 
         if film in df_prev['Title'].values:
-
             # `Fore.Cyan` and `Style.RESET_ALL` are used to color the text in the terminal for better readability
             print(f'{Fore.CYAN}{film} already in csv{Style.RESET_ALL}')
             responses.append(df_prev[df_prev['Title'] == film].iloc[0])
@@ -102,7 +104,6 @@ def create_enhanced_movie_data_csv(df: pd.DataFrame):
 
         except json.decoder.JSONDecodeError:
             print(f'{Fore.RED}Error in {film}, with url: {url} and response: {response.text}{Style.RESET_ALL}')
-
 
     df_res = pd.DataFrame(responses, columns=res_columns)
     df_res.to_csv(output_file_path, index=False)
