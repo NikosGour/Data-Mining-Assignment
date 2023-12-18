@@ -30,6 +30,7 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from src.predict_class import PredictionMovie
 import warnings
 
+matplotlib.use('TkAgg')
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 preprocessing = Preprocessing()
@@ -43,72 +44,105 @@ X = df.drop(columns=['WON_OSCAR'])
 y = df['WON_OSCAR']
 
 
-def decisionTree():
-    true_class_weight = 0.6
-    clf = DecisionTreeClassifier( class_weight={True: true_class_weight, False: 1 - true_class_weight})
-    cv = StratifiedKFold(n_splits=5, shuffle=True)
-    scores = []
-    for i, (train_index, test_index) in enumerate(cv.split(X, y)):
-        clf.fit(X.iloc[train_index], y.iloc[train_index])
-        print(classification_report(y.iloc[test_index], clf.predict(X.iloc[test_index])))
-        scores.append(clf.score(X.iloc[test_index], y.iloc[test_index]))
-        fig = plt.figure(figsize=(25, 20))
-        _ = sklearn.tree.plot_tree(clf, feature_names=X.columns, class_names=['False', 'True'], filled=True)
-        plt.savefig(f'tree{i}.svg', format='svg', bbox_inches='tight')
 
-    print(f"{Fore.GREEN}Decision Tree Classifier{Style.RESET_ALL}")
-    print(f"Accuracy: {np.mean(scores):.2f} (+/- {np.std(scores) * 2:.2f})")
-    print('-' * 100)
-
-    movie = PredictionMovie("Hachi: A Dog's Tale", 2009, "Original Screenplay", 64, 54, 85, 63, "Drama, Family",
-                            108_382, 0, 47_707_417, 47_707_417, 16, 8.1, 6, 13)
-    movie = preprocessing.transform([movie])
-    movie = movie.drop(columns=['TITLE', 'WON_OSCAR'])
-    print(clf.predict_proba(movie))
+    # movie = PredictionMovie("Hachi: A Dog's Tale", 2009, "Original Screenplay", 64, 54, 85, 63, "Drama, Family",
+    #                         108_382, 0, 47_707_417, 47_707_417, 16, 8.1, 6, 13)
+    # movie = preprocessing.transform([movie])
+    # movie = movie.drop(columns=['TITLE', 'WON_OSCAR'])
+    # print(clf.predict_proba(movie))
 
 
 # decisionTree()
 
-
-def randomForest():
-    false_class_weight = 0.999
-    clf = RandomForestClassifier(n_estimators=1000, class_weight={True: 1 - false_class_weight, False: false_class_weight})
-    cv = StratifiedKFold(n_splits=5, shuffle=True)
-    scores = []
-    for i, (train_index, test_index) in enumerate(cv.split(X, y)):
-        clf.fit(X.iloc[train_index], y.iloc[train_index])
-        print(classification_report(y.iloc[test_index], clf.predict(X.iloc[test_index])))
-        scores.append(clf.score(X.iloc[test_index], y.iloc[test_index]))
-        fig = plt.figure(figsize=(25, 20))
-        _ = sklearn.tree.plot_tree(clf.estimators_[0], feature_names=X.columns, class_names=['False', 'True'],
-                                   filled=True)
-        plt.savefig(f'tree{i}.svg', format='svg', bbox_inches='tight')
-
-    print(f"{Fore.GREEN}Random Forest Classifier{Style.RESET_ALL}")
-    print(f"Accuracy: {np.mean(scores):.2f} (+/- {np.std(scores) * 2:.2f})")
-    print('-' * 100)
-    movie = PredictionMovie("Hachi: A Dog's Tale", 2009, "Original Screenplay", 64, 54, 85, 63, "Drama, Family",
-                            108_382, 0, 47_707_417, 47_707_417, 16, 8.1, 6, 13)
-    movie = preprocessing.transform([movie])
-    movie = movie.drop(columns=['TITLE', 'WON_OSCAR'])
-    print(clf.predict_proba(movie))
+#
+# movie = PredictionMovie("Hachi: A Dog's Tale", 2009, "Original Screenplay", 64, 54, 85, 63, "Drama, Family",
+#                         108_382, 0, 47_707_417, 47_707_417, 16, 8.1, 6, 13)
+# movie = preprocessing.transform([movie])
+# movie = movie.drop(columns=['TITLE', 'WON_OSCAR'])
+# print(clf.predict_proba(movie))
+#
 
 
-randomForest()
-# XALIA GIA TO PROBLIMA
-def KNN():
-    clf = KNeighborsClassifier(n_neighbors=2)
-    cv = StratifiedKFold(n_splits=5, shuffle=True)
-    scores = []
-    for i, (train_index, test_index) in enumerate(cv.split(X, y)):
-        clf.fit(X.iloc[train_index], y.iloc[train_index])
-        print(classification_report(y.iloc[test_index], clf.predict(X.iloc[test_index])))
-        scores.append(clf.score(X.iloc[test_index], y.iloc[test_index]))
+from sklearn.metrics import roc_curve , precision_recall_curve
 
-    print(f"{Fore.GREEN}KNeighbors Classifier{Style.RESET_ALL}")
-    print(f"Accuracy: {np.mean(scores):.2f} (+/- {np.std(scores) * 2:.2f})")
-    print('-' * 100)
+# train_X, test_X, train_y, test_y = train_test_split(X, y, test_size=0.2, stratify=df['WON_OSCAR'])
+# false_class_weight = 0.999
+dt = DecisionTreeClassifier()
+rf = RandomForestClassifier(n_estimators=1000)
+knn = KNeighborsClassifier(n_neighbors=3)
+lr = LogisticRegression()
+gnb = GaussianNB()
+svc = SVC(probability=True)
 
+cv = StratifiedKFold(n_splits=5, shuffle=True)
+for i, (train_index, test_index) in enumerate(cv.split(X, y)):
+    train_X = X.iloc[train_index]
+    train_y = y.iloc[train_index]
+    test_X = X.iloc[test_index]
+    test_y = y.iloc[test_index]
+
+    dt.fit(train_X, train_y)
+    rf.fit(train_X, train_y)
+    knn.fit(train_X, train_y)
+    lr.fit(train_X, train_y)
+    gnb.fit(train_X, train_y)
+    svc.fit(train_X, train_y)
+
+    r_probs = [0 for _ in range(len(test_y))]
+    dt_probs = dt.predict_proba(test_X)
+    rf_probs = rf.predict_proba(test_X)
+    knn_probs = knn.predict_proba(test_X)
+    lr_probs = lr.predict_proba(test_X)
+    gnb_probs = gnb.predict_proba(test_X)
+    svc_probs = svc.predict_proba(test_X)
+
+    dt_probs = dt_probs[:, 1]
+    rf_probs = rf_probs[:, 1]
+    knn_probs = knn_probs[:, 1]
+    lr_probs = lr_probs[:, 1]
+    gnb_probs = gnb_probs[:, 1]
+    svc_probs = svc_probs[:, 1]
+#
+# r_auc = roc_auc_score(test_y, r_probs)
+# dt_auc = roc_auc_score(test_y, dt_probs)
+# rf_auc = roc_auc_score(test_y, rf_probs)
+# knn_auc = roc_auc_score(test_y, knn_probs)
+# lr_auc = roc_auc_score(test_y, lr_probs)
+# gnb_auc = roc_auc_score(test_y, gnb_probs)
+# svc_auc = roc_auc_score(test_y, svc_probs)
+#
+# print(f"Random (chance) Prediction: AUROC = {r_auc:.3f}")
+# print(f"Decision Tree: AUROC = {dt_auc:.3f}")
+# print(f"Random Forest: AUROC = {rf_auc:.3f}")
+# print(f"K Nearest Neighbors: AUROC = {knn_auc:.3f}")
+# print(f"Logistic Regression: AUROC = {lr_auc:.3f}")
+# print(f"Gaussian Naive Bayes: AUROC = {gnb_auc:.3f}")
+# print(f"Support Vector Classifier: AUROC = {svc_auc:.3f}")
+
+
+    r_precision, r_recall, _ = precision_recall_curve(test_y, r_probs)
+    dt_precision, dt_recall, _ = precision_recall_curve(test_y, dt_probs)
+    rf_precision, rf_recall, _ = precision_recall_curve(test_y, rf_probs)
+    knn_precision, knn_recall, _ = precision_recall_curve(test_y, knn_probs)
+    lr_precision, lr_recall, _ = precision_recall_curve(test_y, lr_probs)
+    gnb_precision, gnb_recall, _ = precision_recall_curve(test_y, gnb_probs)
+    svc_precision, svc_recall, _ = precision_recall_curve(test_y, svc_probs)
+
+    plt.figure(figsize=(10, 10))
+    plt.plot(r_recall, r_precision, linestyle='--', label='Random prediction' )
+    plt.plot(dt_recall, dt_precision, marker='.', label='Decision Tree')
+    plt.plot(rf_recall, rf_precision, marker='.', label='Random Forest' )
+    plt.plot(knn_recall, knn_precision, marker='.', label='KNN')
+    plt.plot(lr_recall, lr_precision, marker='.', label='Logistic Regression')
+    plt.plot(gnb_recall, gnb_precision, marker='.', label='Gaussian Naive Bayes')
+    plt.plot(svc_recall, svc_precision, marker='.', label='Support Vector Classifier')
+
+    plt.title('Recall Precision Plot')
+    plt.xlabel('Recall')
+    plt.ylabel('Precision')
+    plt.legend()
+
+    plt.savefig(f'pr{i}.svg', format='svg', bbox_inches='tight')
 
 # rfecv = RFECV(estimator=clf, cv=cv, scoring='accuracy')
 # rfecv.fit(X, y)

@@ -13,43 +13,42 @@ class Preprocessing():
         df.columns = [x.upper().strip() for x in df.columns]
         try:
             df.rename(columns=
-                      {'FILM': 'TITLE',
-                       'YEAR': 'RELEASE_YEAR',
-                       'SCRIPT TYPE': 'SCRIPT_TYPE',
-                       'ROTTEN TOMATOES  CRITICS': 'RT_CRITICS',
-                       'METACRITIC  CRITICS': 'MC_CRITICS',
-                       'ROTTEN TOMATOES AUDIENCE': 'RT_AUDIENCE',
-                       'METACRITIC AUDIENCE': 'MC_AUDIENCE',
-                       'PRIMARY GENRE': 'PRIMARY_GENRE',
-                       'OPENING WEEKEND': 'OPENING_WEEKEND',
-                       'DOMESTIC GROSS': 'DOMESTIC_GROSS',
-                       'FOREIGN GROSS': 'FOREIGN_GROSS',
-                       'WORLDWIDE GROSS': 'WORLDWIDE_GROSS',
-                       'BUDGET ($MILLION)': 'BUDGET',
-                       'IMDB RATING': 'IMDB_RATING',
-                       'IMDB VS RT DISPARITY': 'IMDB_RT_DIFFERENCE',
-                       'OSCAR WINNERS': 'WON_OSCAR',
-                       'OSCAR DETAIL': 'OSCAR_DETAILS'},
+                      {'FILM': 'TITLE',#
+                       'YEAR': 'RELEASE_YEAR',#
+                       'SCRIPT TYPE': 'SCRIPT_TYPE',#
+                       'ROTTEN TOMATOES  CRITICS': 'RT_CRITICS',#
+                       'METACRITIC  CRITICS': 'MC_CRITICS',#
+                       'ROTTEN TOMATOES AUDIENCE': 'RT_AUDIENCE',#
+                       'METACRITIC AUDIENCE': 'MC_AUDIENCE',#
+                       'PRIMARY GENRE': 'PRIMARY_GENRE',#
+                       'OPENING WEEKEND': 'OPENING_WEEKEND',#
+                       'DOMESTIC GROSS': 'DOMESTIC_GROSS',#
+                       'FOREIGN GROSS': 'FOREIGN_GROSS',#
+                       'WORLDWIDE GROSS': 'WORLDWIDE_GROSS',#
+                       'BUDGET ($MILLION)': 'BUDGET',#
+                       'IMDB RATING': 'IMDB_RATING',#
+                       'IMDB VS RT DISPARITY': 'IMDB_RT_DIFFERENCE',#
+                       'OSCAR WINNERS': 'WON_OSCAR',#
+                       'OSCAR DETAIL': 'OSCAR_DETAILS'},#
                       inplace=True)
         except Exception as e:
             print(f"Problem in setup rename :{e}")
         try:
             # We drop the columns that we don't need, or that we will calculate later see note at the end of the file.
             df.drop(columns=
-                    ['DOMESTIC GROSS ($MILLION)',
-                     'FOREIGN GROSS ($MILLION)',
-                     'OPENING WEEKEND ($MILLION)',
-                     'DISTRIBUTOR',
-                     'WORLDWIDE GROSS ($MILLION)',
-                     'OF GROSS EARNED ABROAD',
-                     'ROTTEN TOMATOES VS METACRITIC  DEVIANCE',
-                     'AVERAGE AUDIENCE',
-                     'AVERAGE CRITICS',
-                     'ROTTEN TOMATOES VS METACRITIC  DEVIANCE',
-                     'BUDGET RECOVERED OPENING WEEKEND',
-                     'BUDGET RECOVERED',
-                     'AUDIENCE VS CRITICS DEVIANCE',
-                     'PRIMARY_GENRE'], inplace=True)
+                    ['DOMESTIC GROSS ($MILLION)',#
+                     'FOREIGN GROSS ($MILLION)',#
+                     'OPENING WEEKEND ($MILLION)',#
+                     'DISTRIBUTOR',#
+                     'WORLDWIDE GROSS ($MILLION)',#
+                     'OF GROSS EARNED ABROAD',#
+                     'AVERAGE AUDIENCE',#
+                     'AVERAGE CRITICS',#
+                     'ROTTEN TOMATOES VS METACRITIC  DEVIANCE',#
+                     'BUDGET RECOVERED OPENING WEEKEND',#
+                     'BUDGET RECOVERED',#
+                     'AUDIENCE VS CRITICS DEVIANCE',#
+                     'PRIMARY_GENRE'], inplace=True)#
         except Exception as e:
             print(f"Problem in setup drop :{e}")
         return df
