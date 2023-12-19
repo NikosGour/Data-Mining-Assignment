@@ -21,16 +21,17 @@ import Constants
 import os
 from src.preprocessing.preprocessing import Preprocessing
 from IPython.display import display, HTML
-from sklearn.model_selection import train_test_split, cross_val_score, ShuffleSplit, StratifiedKFold
+from sklearn.model_selection import train_test_split, cross_val_score, ShuffleSplit, StratifiedKFold, \
+    RepeatedStratifiedKFold
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 
-from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.metrics import classification_report, confusion_matrix, auc
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 from src.predict_class import PredictionMovie
 import warnings
 
-matplotlib.use('TkAgg')
+# matplotlib.use('TkAgg')
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 preprocessing = Preprocessing()
@@ -65,22 +66,33 @@ y = df['WON_OSCAR']
 
 from sklearn.metrics import roc_curve , precision_recall_curve
 
-# train_X, test_X, train_y, test_y = train_test_split(X, y, test_size=0.2, stratify=df['WON_OSCAR'])
 # false_class_weight = 0.999
-dt = DecisionTreeClassifier()
-rf = RandomForestClassifier(n_estimators=1000)
+# class_weights ={True:1-false_class_weight,False:false_class_weight}
+class_weights = None
+dt = DecisionTreeClassifier(class_weight=class_weights)
+rf = RandomForestClassifier(n_estimators=1000,class_weight=class_weights)
 knn = KNeighborsClassifier(n_neighbors=3)
-lr = LogisticRegression()
+lr = LogisticRegression(max_iter=10000,class_weight=class_weights)
 gnb = GaussianNB()
-svc = SVC(probability=True)
+svc = SVC(probability=True,class_weight=class_weights)
 
-cv = StratifiedKFold(n_splits=5, shuffle=True)
+dt_aucs = []
+rf_aucs = []
+knn_aucs = []
+lr_aucs = []
+gnb_aucs = []
+svc_aucs = []
+
+
+cv = StratifiedKFold(n_splits=5,shuffle=True)
 for i, (train_index, test_index) in enumerate(cv.split(X, y)):
+    # Set the train and test sets
     train_X = X.iloc[train_index]
     train_y = y.iloc[train_index]
     test_X = X.iloc[test_index]
     test_y = y.iloc[test_index]
 
+    # Fit every model
     dt.fit(train_X, train_y)
     rf.fit(train_X, train_y)
     knn.fit(train_X, train_y)
@@ -88,6 +100,8 @@ for i, (train_index, test_index) in enumerate(cv.split(X, y)):
     gnb.fit(train_X, train_y)
     svc.fit(train_X, train_y)
 
+    # Get the prediction the model made (in probabilities,not class)
+    # The first one is to show what results we would expect if we were randomly guessing the class
     r_probs = [0 for _ in range(len(test_y))]
     dt_probs = dt.predict_proba(test_X)
     rf_probs = rf.predict_proba(test_X)
@@ -96,13 +110,74 @@ for i, (train_index, test_index) in enumerate(cv.split(X, y)):
     gnb_probs = gnb.predict_proba(test_X)
     svc_probs = svc.predict_proba(test_X)
 
+    # Get the probability for the class True
     dt_probs = dt_probs[:, 1]
     rf_probs = rf_probs[:, 1]
     knn_probs = knn_probs[:, 1]
     lr_probs = lr_probs[:, 1]
     gnb_probs = gnb_probs[:, 1]
     svc_probs = svc_probs[:, 1]
-#
+    # Get all the precisions and recalls
+    r_fpr, r_tpr, _ = roc_curve(test_y, r_probs)
+    dt_fpr, dt_tpr, _ = roc_curve(test_y, dt_probs)
+    rf_fpr, rf_tpr, _ = roc_curve(test_y, rf_probs)
+    knn_fpr, knn_tpr, _ = roc_curve(test_y, knn_probs)
+    lr_fpr, lr_tpr, _ = roc_curve(test_y, lr_probs)
+    gnb_fpr, gnb_tpr, _ = roc_curve(test_y, gnb_probs)
+    svc_fpr, svc_tpr, _ = roc_curve(test_y, svc_probs)
+
+    # Get the area under the curve for all the precision/recall curves
+    r_auc = auc(r_fpr, r_tpr)
+    dt_auc = auc(dt_fpr, dt_tpr)
+    rf_auc = auc(rf_fpr, rf_tpr)
+    knn_auc = auc(knn_fpr, knn_tpr)
+    lr_auc = auc(lr_fpr, lr_tpr)
+    gnb_auc = auc(gnb_fpr, gnb_tpr)
+    svc_auc = auc(svc_fpr, svc_tpr)
+
+    dt_aucs.append(dt_auc)
+    rf_aucs.append(rf_auc)
+    knn_aucs.append(knn_auc)
+    lr_aucs.append(lr_auc)
+    gnb_aucs.append(gnb_auc)
+    svc_aucs.append(svc_auc)
+
+    # Plot all the fpr/recall curves and
+
+    plt.plot(r_fpr, r_tpr, linestyle='--', label='Random prediction')
+    plt.plot(dt_fpr, dt_tpr, marker='.', label='Decision Tree')
+    plt.plot(rf_fpr, rf_tpr, marker='.', label='Random Forest')
+    plt.plot(knn_fpr, knn_tpr, marker='.', label='KNN')
+    plt.plot(lr_fpr, lr_tpr, marker='.', label='Logistic Regression')
+    plt.plot(gnb_fpr, gnb_tpr, marker='.', label='Gaussian Naive Bayes')
+    plt.plot(svc_fpr, svc_tpr, marker='.', label='Support Vector Classifier')
+
+    plt.title(f'ROC Plot {i+1}')
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.legend()
+
+    plt.show()
+
+    print(f"Random (chance) Prediction: AUC = {r_auc:.3f}")
+    print(f"Decision Tree: AUC = {dt_auc:.3f}")
+    print(f"Random Forest: AUC = {rf_auc:.3f}")
+    print(f"K Nearest Neighbors: AUC = {knn_auc:.3f}")
+    print(f"Logistic Regression: AUC = {lr_auc:.3f}")
+    print(f"Gaussian Naive Bayes: AUC = {gnb_auc:.3f}")
+    print(f"Support Vector Classifier: AUC = {svc_auc:.3f}")
+    print('-' * 100)
+
+
+
+print(f"Decision Tree: Mean AUC = {np.mean(dt_aucs):.3f}")
+print(f"Random Forest: Mean AUC = {np.mean(rf_aucs):.3f}")
+print(f"K Nearest Neighbors: Mean AUC = {np.mean(knn_aucs):.3f}")
+print(f"Logistic Regression: Mean AUC = {np.mean(lr_aucs):.3f}")
+print(f"Gaussian Naive Bayes: Mean AUC = {np.mean(gnb_aucs):.3f}")
+print(f"Support Vector Classifier: Mean AUC = {np.mean(svc_aucs):.3f}")
+
+    #
 # r_auc = roc_auc_score(test_y, r_probs)
 # dt_auc = roc_auc_score(test_y, dt_probs)
 # rf_auc = roc_auc_score(test_y, rf_probs)
@@ -142,7 +217,7 @@ for i, (train_index, test_index) in enumerate(cv.split(X, y)):
     plt.ylabel('Precision')
     plt.legend()
 
-    plt.savefig(f'pr{i}.svg', format='svg', bbox_inches='tight')
+    # plt.savefig(f'pr{i}.svg', format='svg', bbox_inches='tight')
 
 # rfecv = RFECV(estimator=clf, cv=cv, scoring='accuracy')
 # rfecv.fit(X, y)
